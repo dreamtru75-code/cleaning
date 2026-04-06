@@ -2,340 +2,360 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>식생활교육관 재고관리 시스템</title>
-    <!-- Tailwind CSS & React Libraries -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주간 위생 및 청소 점검표</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Nanum+Brush+Script&display=swap');
         
-        body { 
-            font-family: 'Pretendard', sans-serif; 
-            background-color: #f8fafc;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            color: #1e293b;
-            overflow-x: hidden;
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .font-hand { font-family: 'Nanum Brush Script', cursive; font-size: 1.5rem; color: #2563eb; }
+        
+        /* Web Table Styles */
+        .grid-table { 
+            display: grid; 
+            grid-template-columns: 45px 1fr repeat(5, 60px) 180px; 
+            background: white; 
+            border: 1px solid #e2e8f0;
         }
-
-        .neo-card {
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        .grid-cell { 
+            border: 0.5px solid #e2e8f0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 4px; 
+            font-size: 0.85rem; 
+            min-height: 2.5rem; 
         }
+        .header-cell { background-color: #f1f5f9; font-weight: bold; color: #475569; position: sticky; top: 0; z-index: 10; }
+        .clickable-cell { cursor: pointer; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .clickable-cell:hover { background-color: #f0f9ff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .active-push:active {
-            transform: scale(0.96);
-        }
-
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-            gap: 0.5rem;
-        }
-
-        .num-pad-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.5rem;
-        }
-
+        /* PRINT OPTIMIZATION (Strict A4 Layout) */
         @media print {
+            @page { 
+                size: A4 portrait; 
+                /* 여백을 0으로 설정하여 브라우저의 자동 헤더/푸터(URL, 시간 등) 출력을 강제로 제거 */
+                margin: 0; 
+            }
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0;
+            }
             .no-print { display: none !important; }
-            body { background: white !important; padding: 0 !important; }
-            .print-grid { 
-                display: grid !important; 
-                grid-template-columns: repeat(2, 1fr) !important;
-                border: 1px solid black !important;
+            .print-only { display: block !important; }
+            
+            /* 실제 콘텐츠 영역에 여백을 주어 잘리지 않게 함 */
+            .print-page { 
+                page-break-after: always; 
+                width: 210mm;
+                height: 297mm;
+                padding: 15mm 15mm 15mm 15mm;
+                box-sizing: border-box;
+                position: relative;
             }
-            .print-item {
-                border: 0.5px solid #000 !important;
-                padding: 6px 10px !important;
-                text-align: center;
-                break-inside: avoid;
-                display: flex !important;
-                justify-content: space-between !important;
-                background: white !important;
-                font-size: 11pt !important;
+            
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1.2px solid #000; margin-bottom: 5px; }
+            th, td { 
+                border: 1px solid #000; 
+                padding: 0; 
+                font-size: 8.5pt; 
+                text-align: center; 
+                height: 7.2mm; 
+                line-height: 1.2; 
+                vertical-align: middle; 
             }
-        }
+            
+            .font-hand-print { 
+                font-family: 'Nanum Brush Script', cursive; 
+                font-size: 11pt !important; 
+                color: #000;
+            }
+            
+            .col-no { width: 25px; }
+            .col-task { width: auto; text-align: left !important; padding-left: 6px !important; font-size: 8.5pt; }
+            .col-day { width: 42px; } 
+            .col-note { width: 140px; }
 
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
-        
-        .animate-in {
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+            .print-title { font-size: 20pt; font-weight: bold; text-align: center; margin-bottom: 15px; text-decoration: underline; text-underline-offset: 5px; }
+            .print-header-info { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 10pt; font-weight: 500; }
+            
+            .improvement-box { width: 100%; margin-top: 10px; border-collapse: collapse; }
+            .improvement-box td { height: 10mm; text-align: left; padding-left: 10px; }
+            .improvement-label { width: 80px; background-color: #f8f8f8; font-weight: bold; text-align: center !important; padding-left: 0 !important; }
+
+            .sign-area { margin-top: 15px; font-size: 10pt; display: flex; justify-content: flex-end; gap: 40px; font-weight: bold; }
         }
     </style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
-
-        const ICONS = {
-            Plus: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-            Check: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-            Printer: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"/></svg>,
-            Rotate: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 4v5h5M20 20v-5h-5M20 4.24a10 10 0 101.37 11.23" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-            Trash: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-            Calendar: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,
-            Settings: (props) => <svg {...props} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        };
-
-        const App = () => {
-            const today = new Date().toISOString().split('T')[0];
-            const [mode, setMode] = useState('input'); 
-            const [selectedDate, setSelectedDate] = useState(today);
-            const [inventory, setInventory] = useState({});
-            const [customItems, setCustomItems] = useState([]);
-            const [schoolName, setSchoolName] = useState("학교 이름을 설정하세요");
-            const [activeKeypad, setActiveKeypad] = useState(null);
-            const [isSaving, setIsSaving] = useState(false);
-            const [hasChanges, setHasChanges] = useState(false);
-            const [isAddItemOpen, setIsAddItemOpen] = useState(false);
-            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-            const [newItemName, setNewItemName] = useState("");
-
-            const baseItems = [
-                "양조간장", "고추장", "된장", "쌈장", "국간장", "굴소스", "콩기름", "볶은참깨", "참기름", "고춧가루",
-                "설탕", "굵은소금", "구운소금", "물엿", "식초", "맛술", "후추", "매실액기스",
-                "밀가루", "빵가루", "전분", "찹쌀가루", "부침가루", "튀김가루", "치킨튀김가루", "카레가루",
-                "자장가루", "하이스가루", "마요네즈", "케첩", "들깨가루", "올리브유",
-                "멸치액젓", "새우젓", "우동", "소면", "당면", "조미김가루", "올리고당", "파마산치즈", "배추김치"
-            ];
-
-            const subItems = {
-                "허브류": ["월계수잎", "파슬리", "통계피", "통후추", "바질", "팔각", "정향", "계피가루", "오레가노", "로즈마리"],
-                "드레싱": ["허니머스타드", "오리엔탈", "발사믹", "발사믹글레이즈", "칠리소스", "핫소스"]
-            };
-
-            const allMainItems = useMemo(() => [...baseItems, ...Object.keys(subItems), ...customItems], [customItems]);
-
-            // Load initial data
-            useEffect(() => {
-                const savedItems = localStorage.getItem('school_custom_items');
-                if (savedItems) setCustomItems(JSON.parse(savedItems));
-                const savedSchool = localStorage.getItem('school_name');
-                if (savedSchool) setSchoolName(savedSchool);
-                const savedInv = localStorage.getItem(`inv_${mode === 'input' ? today : selectedDate}`);
-                if (savedInv) setInventory(JSON.parse(savedInv)); else setInventory({});
-                setHasChanges(false);
-            }, [selectedDate, mode, today]);
-
-            // Auto-save effect (1 second debounce)
-            useEffect(() => {
-                if (!hasChanges) return;
-                const timer = setTimeout(() => {
-                    handleSave();
-                }, 1000);
-                return () => clearTimeout(timer);
-            }, [inventory, customItems, schoolName, hasChanges]);
-
-            const handleSave = () => {
-                setIsSaving(true);
-                localStorage.setItem(`inv_${mode === 'input' ? today : selectedDate}`, JSON.stringify(inventory));
-                localStorage.setItem('school_custom_items', JSON.stringify(customItems));
-                localStorage.setItem('school_name', schoolName);
-                setTimeout(() => { 
-                    setIsSaving(false); 
-                    setHasChanges(false); 
-                }, 400);
-            };
-
-            const updateValue = (item, val) => {
-                setInventory(prev => ({ ...prev, [item]: val }));
-                setHasChanges(true);
-            };
-
-            const resetAll = () => {
-                if(confirm('모든 입력 데이터를 초기화할까요?')) {
-                    setInventory({});
-                    setHasChanges(true);
-                }
-            };
-
-            const addNewItem = () => {
-                if (!newItemName.trim() || allMainItems.includes(newItemName)) return;
-                const updated = [...customItems, newItemName.trim()];
-                setCustomItems(updated);
-                setIsAddItemOpen(false); 
-                setNewItemName(""); 
-                setHasChanges(true);
-            };
-
-            const deleteItem = (e, item) => {
-                e.stopPropagation();
-                const updated = customItems.filter(i => i !== item);
-                setCustomItems(updated);
-                const newInv = { ...inventory }; 
-                delete newInv[item]; 
-                setInventory(newInv);
-                setHasChanges(true);
-            };
-
-            return (
-                <div className="max-w-xl mx-auto min-h-screen flex flex-col bg-slate-50">
-                    <header className="bg-slate-900 text-white p-3 sticky top-0 z-50 shadow-lg no-print">
-                        <div className="flex justify-between items-center mb-2">
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-7 h-7 bg-emerald-500 rounded flex items-center justify-center font-black text-white italic text-sm">K</div>
-                                <h1 className="text-lg font-black tracking-tighter">식생활교육관</h1>
-                            </div>
-                            <div className="flex gap-1 bg-slate-800 p-1 rounded-lg">
-                                <button onClick={() => setMode('input')} className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${mode === 'input' ? 'bg-white text-slate-900 shadow' : 'text-slate-400'}`}>입력</button>
-                                <button onClick={() => setMode('report')} className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${mode === 'report' ? 'bg-white text-slate-900 shadow' : 'text-slate-400'}`}>영양교사</button>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 flex-grow">
-                                <ICONS.Calendar className="w-4 h-4 text-emerald-400" />
-                                <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)}
-                                    className="bg-slate-800 font-bold text-xs outline-none w-full text-white appearance-none" style={{ colorScheme: 'dark' }} />
-                            </div>
-                            {mode === 'input' ? (
-                                <div className={`px-4 py-1.5 rounded-xl font-black text-[10px] transition-all flex items-center gap-2 ${isSaving ? "bg-amber-400 text-amber-900" : hasChanges ? "bg-slate-700 text-slate-300" : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"}`}>
-                                    {isSaving ? <span className="flex h-2 w-2 rounded-full bg-amber-600 animate-pulse"></span> : hasChanges ? <span className="flex h-2 w-2 rounded-full bg-slate-500 animate-bounce"></span> : <ICONS.Check className="w-3 h-3" />}
-                                    {isSaving ? "저장 중" : hasChanges ? "입력 중..." : "자동 저장됨"}
-                                </div>
-                            ) : (
-                                <button onClick={() => setIsSettingsOpen(true)} className="w-9 h-9 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-700 text-slate-400 active-push"><ICONS.Settings className="w-5 h-5" /></button>
-                            )}
-                        </div>
-                    </header>
-
-                    <main className="flex-grow p-2 animate-in">
-                        {mode === 'input' ? (
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center px-1">
-                                    <h2 className="text-lg font-black text-slate-800 tracking-tight">학교급식 식재료 재고 관리</h2>
-                                    <div className="flex gap-2">
-                                        <button onClick={resetAll} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-400 active-push"><ICONS.Rotate className="w-4 h-4"/></button>
-                                        <button onClick={() => setIsAddItemOpen(true)} className="w-8 h-8 flex items-center justify-center bg-slate-900 text-white rounded-lg active-push shadow-md"><ICONS.Plus className="w-5 h-5"/></button>
-                                    </div>
-                                </div>
-                                <div className="inventory-grid">
-                                    {allMainItems.map(item => {
-                                        const isSpecial = !!subItems[item];
-                                        const isCustom = customItems.includes(item);
-                                        const val = isSpecial ? subItems[item].reduce((acc, curr) => acc + (inventory[curr] || 0), 0) : (inventory[item] || 0);
-                                        const hasVal = val > 0;
-                                        return (
-                                            <div key={item} onClick={() => setActiveKeypad(item)} className={`neo-card p-2 h-20 flex flex-col items-center justify-center relative active-push cursor-pointer border-2 transition-all ${hasVal ? 'border-emerald-500 bg-emerald-50/30' : 'border-white'}`}>
-                                                <span className={`text-[11px] font-black leading-tight text-center break-keep px-1 mb-0.5 ${hasVal ? 'text-emerald-900' : 'text-slate-500'}`}>{item}</span>
-                                                <span className={`text-xl font-black ${hasVal ? 'text-emerald-600' : 'text-slate-200'}`}>{val}</span>
-                                                {isCustom && <button onClick={(e) => deleteItem(e, item)} className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center border-2 border-white shadow-md active:scale-75"><ICONS.Trash className="w-3 h-3" /></button>}
-                                                {isSpecial && <div className="absolute bottom-0.5 right-1.5 text-[7px] font-black text-emerald-300">MULTI</div>}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm print:p-0 print:border-0 print:shadow-none">
-                                <div className="text-center mb-6 border-b-2 border-slate-900 pb-4">
-                                    <div className="inline-block px-2 py-0.5 bg-emerald-100 text-emerald-700 font-black text-[10px] rounded mb-1 uppercase">{schoolName}</div>
-                                    <h1 className="text-xl font-black tracking-tighter text-slate-900">식재료 재고 현황표</h1>
-                                    <p className="text-sm font-bold text-slate-500 mt-1">{selectedDate} 기준</p>
-                                    <button onClick={() => window.print()} className="mt-4 no-print flex items-center gap-1.5 mx-auto bg-slate-900 text-white px-5 py-2 rounded-full font-bold text-xs active-push shadow-lg">
-                                        <ICONS.Printer className="w-4 h-4" /> 결과 출력
-                                    </button>
-                                </div>
-                                <div className="print-grid grid grid-cols-2 gap-1.5">
-                                    {allMainItems.filter(i => !subItems[i]).map(item => (
-                                        <div key={item} className="print-item border border-slate-100 rounded-lg p-2.5 flex justify-between items-center bg-slate-50/50">
-                                            <span className="font-bold text-slate-700 text-xs">{item}</span>
-                                            <span className="text-base font-black text-slate-900">{inventory[item] || 0}</span>
-                                        </div>
-                                    ))}
-                                    {Object.entries(subItems).map(([cat, list]) => list.map(item => (
-                                        <div key={item} className="print-item border border-slate-100 rounded-lg p-2.5 flex justify-between items-center bg-slate-50/50">
-                                            <span className="font-bold text-slate-700 text-xs">{item}</span>
-                                            <span className="text-base font-black text-slate-900">{inventory[item] || 0}</span>
-                                        </div>
-                                    )))}
-                                </div>
-                            </div>
-                        )}
-                    </main>
-
-                    {/* Numeric Keypad Modal */}
-                    {activeKeypad && (
-                        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 no-print animate-in">
-                            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setActiveKeypad(null)}></div>
-                            <div className="relative bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 pb-8 shadow-2xl overflow-hidden">
-                                <div className="flex justify-between items-center mb-5">
-                                    <h3 className="text-xl font-black text-slate-900">{activeKeypad}</h3>
-                                    <button onClick={() => setActiveKeypad(null)} className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400"><ICONS.Plus className="rotate-45 w-5 h-5"/></button>
-                                </div>
-                                {subItems[activeKeypad] ? (
-                                    <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
-                                        {subItems[activeKeypad].map(sub => (
-                                            <div key={sub} className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between">
-                                                <span className="font-black text-slate-700 text-sm w-1/3">{sub}</span>
-                                                <div className="flex gap-1.5 flex-1 justify-end">
-                                                    {[0, 0.5, 1, 2].map(n => (
-                                                        <button key={n} onClick={() => updateValue(sub, n)} className={`w-10 h-10 text-xs font-black rounded-lg border-2 transition-all ${inventory[sub] === n ? 'bg-emerald-500 border-emerald-600 text-white' : 'bg-white border-slate-100 text-slate-400 active-push'}`}>
-                                                            {n}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="num-pad-grid">
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0.5, 0, 10].map(n => (
-                                            <button key={n} onClick={() => { updateValue(activeKeypad, n); setActiveKeypad(null); }} className={`h-14 rounded-xl text-xl font-black border-2 transition-all ${inventory[activeKeypad] === n ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-slate-50 text-slate-500 border-slate-100 active-push'}`}>
-                                                {n}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Settings Modal */}
-                    {isSettingsOpen && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 no-print animate-in">
-                            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setIsSettingsOpen(false)}></div>
-                            <div className="relative bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl">
-                                <h3 className="text-xl font-black text-slate-900 mb-4 text-center">기관 설정</h3>
-                                <input type="text" value={schoolName} onChange={(e) => { setSchoolName(e.target.value); setHasChanges(true); }} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none font-black text-lg text-center focus:border-emerald-500" placeholder="학교명 입력" />
-                                <button onClick={() => setIsSettingsOpen(false)} className="w-full mt-6 py-4 bg-slate-900 text-white font-black rounded-xl active-push">닫기</button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Add Item Modal */}
-                    {isAddItemOpen && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 no-print animate-in">
-                            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setIsAddItemOpen(false)}></div>
-                            <div className="relative bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center">
-                                <h3 className="text-xl font-black text-slate-900 mb-4">신규 품목 추가</h3>
-                                <input type="text" placeholder="품목명" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none font-black text-lg text-center focus:border-emerald-500" onKeyPress={(e) => e.key === 'Enter' && addNewItem()} />
-                                <div className="flex gap-2 mt-6">
-                                    <button onClick={() => setIsAddItemOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-400 font-bold rounded-xl">취소</button>
-                                    <button onClick={addNewItem} className="flex-1 py-3 bg-emerald-500 text-white font-black rounded-xl">추가</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+    <!-- Web Interface -->
+    <div class="max-w-5xl mx-auto my-6 bg-white shadow-xl rounded-2xl overflow-hidden no-print">
+        <header class="bg-blue-900 text-white p-5">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-xl font-bold" id="displaySchool">순천부영초등학교</h1>
+                    <p class="text-blue-300 text-sm">dikin@naver.com</p>
                 </div>
-            );
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="bg-white text-blue-900 px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-50 transition-colors">인쇄하기</button>
+                    <button onclick="toggleSettings()" class="bg-blue-800 p-2 rounded-lg hover:bg-blue-700">⚙</button>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex flex-wrap items-center gap-4 bg-blue-950/40 p-3 rounded-xl">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-blue-200 uppercase">점검주간:</span>
+                    <input type="date" id="weekPicker" onchange="loadWeek()" class="bg-blue-900 border border-blue-700 rounded px-2 py-1 text-sm outline-none">
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="checkAllDay(0)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">월</button>
+                    <button onclick="checkAllDay(1)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">화</button>
+                    <button onclick="checkAllDay(2)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">수</button>
+                    <button onclick="checkAllDay(3)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">목</button>
+                    <button onclick="checkAllDay(4)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">금</button>
+                </div>
+                <div id="weekRangeDisplay" class="ml-auto text-sm font-mono text-blue-200"></div>
+            </div>
+        </header>
+
+        <nav class="flex border-b">
+            <button onclick="showTab('hygiene')" id="btn-hygiene" class="flex-1 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 bg-white">위생점검</button>
+            <button onclick="showTab('cleaning')" id="btn-cleaning" class="flex-1 py-3 text-sm font-bold text-slate-400 hover:bg-slate-50">청소점검</button>
+        </nav>
+
+        <div class="p-4 bg-slate-50 overflow-y-auto" style="max-height: 600px;">
+            <div id="hygiene" class="tab-content active"><div class="grid-table" id="hygieneGrid"></div></div>
+            <div id="cleaning" class="tab-content"><div class="grid-table" id="cleaningGrid"></div></div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-xs p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4">정보 설정</h3>
+            <div class="space-y-4">
+                <input type="text" id="schoolInput" placeholder="학교명" class="w-full p-2 border rounded-lg text-sm">
+                <input type="text" id="cookInput" placeholder="작성자명" class="w-full p-2 border rounded-lg text-sm">
+                <input type="text" id="approverInput" placeholder="확인자명" class="w-full p-2 border rounded-lg text-sm">
+            </div>
+            <button onclick="saveSettings()" class="w-full mt-6 py-2 bg-blue-600 text-white rounded-lg font-bold">저장</button>
+        </div>
+    </div>
+
+    <!-- Print View -->
+    <div class="hidden print-only" id="printLayout">
+        <!-- Page 1: Hygiene -->
+        <div class="print-page">
+            <div class="print-title">주간 위생 점검표</div>
+            <div class="print-header-info">
+                <div>기관명: <span class="p-school"></span></div>
+                <div>점검기간: <span class="p-range"></span></div>
+            </div>
+            <table>
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th class="col-no">No</th><th class="col-task">점검사항</th>
+                        <th class="col-day">월</th><th class="col-day">화</th><th class="col-day">수</th><th class="col-day">목</th><th class="col-day">금</th>
+                        <th class="col-note">비고</th>
+                    </tr>
+                </thead>
+                <tbody id="pBodyHygiene"></tbody>
+            </table>
+            <table class="improvement-box">
+                <tr>
+                    <td rowspan="2" class="improvement-label">개선 및<br>조치사항</td>
+                    <td>1. </td>
+                </tr>
+                <tr>
+                    <td>2. </td>
+                </tr>
+            </table>
+            <div class="sign-area">
+                <span>작성자: <span class="p-cook"></span> (인)</span>
+                <span>확인자: <span class="p-approver"></span> (인)</span>
+            </div>
+        </div>
+
+        <!-- Page 2: Cleaning -->
+        <div class="print-page">
+            <div class="print-title">주간 청소 점검표</div>
+            <div class="print-header-info">
+                <div>기관명: <span class="p-school"></span></div>
+                <div>점검기간: <span class="p-range"></span></div>
+            </div>
+            <table>
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th class="col-no">No</th><th class="col-task">점검사항</th>
+                        <th class="col-day">월</th><th class="col-day">화</th><th class="col-day">수</th><th class="col-day">목</th><th class="col-day">금</th>
+                        <th class="col-note">비고</th>
+                    </tr>
+                </thead>
+                <tbody id="pBodyCleaning"></tbody>
+            </table>
+            <table class="improvement-box">
+                <tr>
+                    <td rowspan="2" class="improvement-label">개선 및<br>조치사항</td>
+                    <td>1. </td>
+                </tr>
+                <tr>
+                    <td>2. </td>
+                </tr>
+            </table>
+            <div class="sign-area">
+                <span>작성자: <span class="p-cook"></span> (인)</span>
+                <span>확인자: <span class="p-approver"></span> (인)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const hTasks = [
+            "건강상태(설사, 발열, 구토) 여부", "손가락의 상처 및 화농성 질환 여부", "위생복, 위생모, 위생화 착용 상태",
+            "손 세척 및 소독(배식전 포함) 여부", "손톱의 청결상태 및 매니큐어 여부", "조리사 심리적 안도감 및 친절 상태",
+            "부패/변질 식재료 사용 금지 준수", "검수 시 온도의 적절성 확인", "식재료의 위생적 구분 보관 상태",
+            "보존식 채취 및 보관(-18℃ 이하)", "냉장/냉동고 적정 온도 유지 여부", "조리 전/후 식품의 교차오염 방지",
+            "가열 조리 시 중심온도 측정(85℃)", "채소/과일류의 세척 및 소독 여부", "배식 시 위생장갑 및 마스크 착용",
+            "비오염구역과 오염구역의 구분", "방충 및 방서 시설의 관리 상태", "칼, 도마 등 용도별 구분 사용",
+            "조리기구 세척 후 건조 및 소독", "수돗물 외 음용수 정기 수질검사", "바닥의 청결 및 배수구 찌꺼기 제거",
+            "쓰레기통 덮개 비치 및 위생 관리", "청소도구의 위생적 보관 상태", "가스/전기 누설 및 차단기 점검",
+            "소화기 압력계 및 인근 통로 확보", "유통기한 경과 제품 보관 여부"
+        ];
+
+        const cTasks = [
+            "취사기 및 밥솥 주변의 세척 상태", "국솥 및 조림솥 하단부 찌꺼기 제거", "튀김기 및 볶음솥 세척 후 건조",
+            "식판 및 찬통의 살균/세척 상태", "세정대 내외부의 기름때 제거", "조리대 및 작업대 하부 선반 청결",
+            "칼/도마 소독고 내부의 청결 유지", "자외선 살균기 내부 램프 작동 확인", "트랜치 내부 및 덮개의 이물질 제거",
+            "후드 필터 및 내부 기름방울 제거", "유리창 먼지 및 방충망 훼손 여부", "종사자 휴게실 및 화장실 청결",
+            "냉장고 선반 및 바닥 물청소", "환풍기 및 닥트 흡입구 먼지 제거", "청소용 세제 및 소독제 라벨링 보관",
+            "식기 건조 선반의 하부 먼지 제거", "배수구 트랩의 거름망 청결 상태", "문 손잡이 및 전원 스위치 소독",
+            "걸레 건조대 및 청소도구함 정리", "조명기구 덮개 및 천장 거미줄 제거", "배식 카트 바퀴의 머리카락 제거",
+            "냉난방기 필터 청소 및 외관 청결", "소화기 외관의 부식 및 변형 확인", "소화시설 인근의 물품 적재 여부"
+        ];
+
+        let state = {
+            school: localStorage.getItem('s_name') || "순천부영초등학교",
+            cook: localStorage.getItem('c_name') || "",
+            approver: localStorage.getItem('a_name') || "양선희",
+            data: {} 
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        function init() {
+            const today = new Date();
+            const mon = new Date(today.setDate(today.getDate() + (today.getDay() === 0 ? -6 : 1 - today.getDay())));
+            document.getElementById('weekPicker').value = mon.toISOString().split('T')[0];
+            updateInfo();
+            loadWeek();
+        }
+
+        function updateInfo() {
+            document.getElementById('displaySchool').innerText = state.school;
+            document.getElementById('schoolInput').value = state.school;
+            document.getElementById('cookInput').value = state.cook;
+            document.getElementById('approverInput').value = state.approver;
+            document.querySelectorAll('.p-school').forEach(e => e.innerText = state.school);
+            document.querySelectorAll('.p-cook').forEach(e => e.innerText = state.cook);
+            document.querySelectorAll('.p-approver').forEach(e => e.innerText = state.approver);
+        }
+
+        function loadWeek() {
+            const weekKey = document.getElementById('weekPicker').value;
+            const saved = localStorage.getItem(`week_${weekKey}`);
+            
+            if (saved) {
+                state.data = JSON.parse(saved);
+            } else {
+                state.data = {
+                    hygiene: { checks: hTasks.map(() => Array(5).fill("")), notes: hTasks.map(() => "") },
+                    cleaning: { checks: cTasks.map(() => Array(5).fill("")), notes: cTasks.map(() => "") }
+                };
+            }
+
+            const mon = new Date(weekKey);
+            const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+            const range = `${mon.getFullYear()}.${mon.getMonth()+1}.${mon.getDate()} ~ ${fri.getFullYear()}.${fri.getMonth()+1}.${fri.getDate()}`;
+            document.getElementById('weekRangeDisplay').innerText = range;
+            document.querySelectorAll('.p-range').forEach(e => e.innerText = range);
+
+            render();
+        }
+
+        function render() {
+            const build = (tasks, type) => {
+                let html = `<div class="grid-cell header-cell">No</div><div class="grid-cell header-cell">점검사항</div><div class="grid-cell header-cell">월</div><div class="grid-cell header-cell">화</div><div class="grid-cell header-cell">수</div><div class="grid-cell header-cell">목</div><div class="grid-cell header-cell">금</div><div class="grid-cell header-cell">비고</div>`;
+                tasks.forEach((task, i) => {
+                    html += `<div class="grid-cell font-bold text-slate-400">${i+1}</div><div class="grid-cell justify-start px-2 font-medium">${task}</div>`;
+                    for(let d=0; d<5; d++) {
+                        const val = state.data[type].checks[i][d];
+                        html += `<div class="grid-cell p-0"><div class="clickable-cell font-hand" onclick="cycle('${type}', ${i}, ${d})">${val}</div></div>`;
+                    }
+                    html += `<div class="grid-cell p-1"><input type="text" class="w-full h-full bg-transparent text-xs px-1 outline-none" value="${state.data[type].notes[i]}" onchange="updNote('${type}', ${i}, this.value)"></div>`;
+                });
+                return html;
+            };
+            document.getElementById('hygieneGrid').innerHTML = build(hTasks, 'hygiene');
+            document.getElementById('cleaningGrid').innerHTML = build(cTasks, 'cleaning');
+
+            const buildPrint = (tasks, type) => {
+                let html = "";
+                tasks.forEach((task, i) => {
+                    html += `<tr><td>${i+1}</td><td class="col-task">${task}</td>`;
+                    for(let d=0; d<5; d++) html += `<td class="font-hand-print">${state.data[type].checks[i][d]}</td>`;
+                    html += `<td>${state.data[type].notes[i]}</td></tr>`;
+                });
+                return html;
+            };
+            document.getElementById('pBodyHygiene').innerHTML = buildPrint(hTasks, 'hygiene');
+            document.getElementById('pBodyCleaning').innerHTML = buildPrint(cTasks, 'cleaning');
+        }
+
+        function cycle(type, row, col) {
+            const cur = state.data[type].checks[row][col];
+            state.data[type].checks[row][col] = cur === "" ? "양호" : (cur === "양호" ? "미흡" : "");
+            save(); render();
+        }
+
+        function checkAllDay(col) {
+            const type = document.getElementById('hygiene').classList.contains('active') ? 'hygiene' : 'cleaning';
+            const tasks = type === 'hygiene' ? hTasks : cTasks;
+            tasks.forEach((_, i) => state.data[type].checks[i][col] = "양호");
+            save(); render();
+        }
+
+        function updNote(type, row, val) {
+            state.data[type].notes[row] = val;
+            save(); render();
+        }
+
+        function showTab(t) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(t).classList.add('active');
+            document.getElementById('btn-hygiene').className = t === 'hygiene' ? "flex-1 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 bg-white" : "flex-1 py-3 text-sm font-bold text-slate-400 hover:bg-slate-50";
+            document.getElementById('btn-cleaning').className = t === 'cleaning' ? "flex-1 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 bg-white" : "flex-1 py-3 text-sm font-bold text-slate-400 hover:bg-slate-50";
+        }
+
+        function toggleSettings() { document.getElementById('settingsModal').classList.toggle('hidden'); }
+
+        function saveSettings() {
+            state.school = document.getElementById('schoolInput').value;
+            state.cook = document.getElementById('cookInput').value;
+            state.approver = document.getElementById('approverInput').value;
+            localStorage.setItem('s_name', state.school);
+            localStorage.setItem('c_name', state.cook);
+            localStorage.setItem('a_name', state.approver);
+            updateInfo(); toggleSettings(); render();
+        }
+
+        function save() {
+            localStorage.setItem(`week_${document.getElementById('weekPicker').value}`, JSON.stringify(state.data));
+        }
+
+        init();
     </script>
 </body>
 </html>
