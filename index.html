@@ -2,412 +2,360 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>주간 위생 및 청소/시설 점검표</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주간 위생 및 청소 점검표</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Nanum+Brush+Script&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Nanum+Brush+Script&display=swap');
         
-        body { font-family: 'Noto Sans KR', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .font-hand { font-family: 'Nanum Brush Script', cursive; font-size: 1.5rem; color: #2563eb; }
         
-        .font-hand { 
-            font-family: 'Nanum Brush Script', cursive; 
-            font-size: 1.1rem; 
-            line-height: 0.8;
-            font-weight: 400;
+        /* Web Table Styles */
+        .grid-table { 
+            display: grid; 
+            grid-template-columns: 45px 1fr repeat(5, 60px) 180px; 
+            background: white; 
+            border: 1px solid #e2e8f0;
         }
-        
-        /* Mobile UI Styles */
-        .grid-table { display: grid; grid-template-columns: 2.2rem 1fr repeat(5, 2.8rem); border: 1px solid #e2e8f0; }
-        .grid-cell { border: 0.5px solid #e2e8f0; display: flex; align-items: center; justify-content: center; padding: 3px; font-size: 0.72rem; min-height: 2.5rem; }
-        .header-cell { background-color: #f8fafc; font-weight: bold; color: #475569; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 0.7rem; }
-        .check-cycle { cursor: pointer; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: all 0.1s; }
-        .val-good { color: #059669; } 
-        .val-bad { color: #dc2626; transform: rotate(-2deg); font-weight: bold; }
+        .grid-cell { 
+            border: 0.5px solid #e2e8f0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 4px; 
+            font-size: 0.85rem; 
+            min-height: 2.5rem; 
+        }
+        .header-cell { background-color: #f1f5f9; font-weight: bold; color: #475569; position: sticky; top: 0; z-index: 10; }
+        .clickable-cell { cursor: pointer; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .clickable-cell:hover { background-color: #f0f9ff; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Print Optimization */
+        /* PRINT OPTIMIZATION (Strict A4 Layout) */
         @media print {
             @page { 
-                size: A4 portrait;
-                margin: 16mm 10mm 10mm 10mm; /* 상단 여백 2배 적용 */
+                size: A4 portrait; 
+                /* 여백을 0으로 설정하여 브라우저의 자동 헤더/푸터(URL, 시간 등) 출력을 강제로 제거 */
+                margin: 0; 
+            }
+            body { 
+                background: white; 
+                padding: 0; 
+                margin: 0;
             }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            body { background: white; padding: 0; margin: 0; width: 100%; }
             
+            /* 실제 콘텐츠 영역에 여백을 주어 잘리지 않게 함 */
             .print-page { 
                 page-break-after: always; 
-                width: 100%;
-                max-width: 190mm; /* 오른쪽 잘림 방지를 위해 폭 제한 */
-                margin: 0 auto;
-                display: flex;
-                flex-direction: column;
+                width: 210mm;
+                height: 297mm;
+                padding: 15mm 15mm 15mm 15mm;
+                box-sizing: border-box;
+                position: relative;
             }
-            .print-page:last-child { page-break-after: auto; }
-
-            table { 
-                width: 100%; 
-                border-collapse: collapse; 
-                table-layout: fixed; /* 셀 너비 고정 */
-                border: 1.2px solid #000; 
-            }
+            
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1.2px solid #000; margin-bottom: 5px; }
             th, td { 
                 border: 1px solid #000; 
-                padding: 4px 1px;
-                font-size: 8pt; 
+                padding: 0; 
+                font-size: 8.5pt; 
                 text-align: center; 
-                line-height: 1.1;
+                height: 7.2mm; 
+                line-height: 1.2; 
+                vertical-align: middle; 
             }
             
-            /* 열 너비 최적화 (오른쪽 잘림 방지) */
-            .col-no { width: 6%; }
-            .col-task { width: 44%; }
-            .col-day { width: 8.5%; }
-            .col-note { width: 7.5%; } /* 비고란 축소 */
-
-            .print-title-container {
-                text-align: center;
-                width: 100%;
-                margin-bottom: 25px; /* 타이틀 하단 여백 추가 */
-            }
-            .print-title { 
-                font-size: 18pt; 
-                font-weight: bold; 
-                padding: 5px 25px; 
-                border: 2px solid #000; 
-                display: inline-block; 
-            }
-
-            .print-header-info { 
-                display: flex; 
-                justify-content: space-between; 
-                margin-bottom: 8px; 
-                font-size: 9pt; 
-            }
-            .section-title { 
-                font-size: 9.5pt; 
-                font-weight: bold; 
-                margin-top: 15px; 
-                margin-bottom: 5px;
-                text-align: left; 
+            .font-hand-print { 
+                font-family: 'Nanum Brush Script', cursive; 
+                font-size: 11pt !important; 
+                color: #000;
             }
             
-            .action-table td { height: 32px; }
+            .col-no { width: 25px; }
+            .col-task { width: auto; text-align: left !important; padding-left: 6px !important; font-size: 8.5pt; }
+            .col-day { width: 42px; } 
+            .col-note { width: 140px; }
 
-            .print-footer-signature { 
-                display: flex; 
-                justify-content: flex-end; 
-                gap: 40px; 
-                margin-top: 20px;
-                font-size: 10pt; 
-            }
-            .sig-item { width: auto; text-align: right; }
+            .print-title { font-size: 20pt; font-weight: bold; text-align: center; margin-bottom: 15px; text-decoration: underline; text-underline-offset: 5px; }
+            .print-header-info { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 10pt; font-weight: 500; }
+            
+            .improvement-box { width: 100%; margin-top: 10px; border-collapse: collapse; }
+            .improvement-box td { height: 10mm; text-align: left; padding-left: 10px; }
+            .improvement-label { width: 80px; background-color: #f8f8f8; font-weight: bold; text-align: center !important; padding-left: 0 !important; }
+
+            .sign-area { margin-top: 15px; font-size: 10pt; display: flex; justify-content: flex-end; gap: 40px; font-weight: bold; }
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body>
 
-    <div class="max-w-4xl mx-auto bg-white min-h-screen shadow-lg pb-24 no-print">
-        <header class="bg-indigo-800 text-white p-4 sticky top-0 z-30 shadow-md">
-            <div class="flex justify-between items-center mb-2">
+    <!-- Web Interface -->
+    <div class="max-w-5xl mx-auto my-6 bg-white shadow-xl rounded-2xl overflow-hidden no-print">
+        <header class="bg-blue-900 text-white p-5">
+            <div class="flex justify-between items-start">
                 <div>
-                    <h1 class="text-lg font-bold" id="headerSchoolName">순천부영초등학교</h1>
+                    <h1 class="text-xl font-bold" id="displaySchool">순천부영초등학교</h1>
+                    <p class="text-blue-300 text-sm">dikin@naver.com</p>
                 </div>
-                <button onclick="toggleSettings()" class="p-2 bg-indigo-700 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="bg-white text-blue-900 px-4 py-2 rounded-lg font-bold text-sm shadow hover:bg-blue-50 transition-colors">인쇄하기</button>
+                    <button onclick="toggleSettings()" class="bg-blue-800 p-2 rounded-lg hover:bg-blue-700">⚙</button>
+                </div>
             </div>
-            <div class="flex items-center gap-2">
-                <input type="date" id="weekPicker" onchange="loadWeek()" class="bg-indigo-900 text-sm p-1.5 rounded border border-indigo-400 text-white outline-none">
-                <span class="text-xs" id="weekRangeText"></span>
+            
+            <div class="mt-6 flex flex-wrap items-center gap-4 bg-blue-950/40 p-3 rounded-xl">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-blue-200 uppercase">점검주간:</span>
+                    <input type="date" id="weekPicker" onchange="loadWeek()" class="bg-blue-900 border border-blue-700 rounded px-2 py-1 text-sm outline-none">
+                </div>
+                <div class="flex gap-1">
+                    <button onclick="checkAllDay(0)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">월</button>
+                    <button onclick="checkAllDay(1)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">화</button>
+                    <button onclick="checkAllDay(2)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">수</button>
+                    <button onclick="checkAllDay(3)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">목</button>
+                    <button onclick="checkAllDay(4)" class="w-8 h-8 flex items-center justify-center bg-blue-800 rounded text-xs hover:bg-blue-600 transition-colors">금</button>
+                </div>
+                <div id="weekRangeDisplay" class="ml-auto text-sm font-mono text-blue-200"></div>
             </div>
         </header>
 
-        <div class="flex border-b bg-white sticky top-[108px] z-20">
-            <button onclick="showTab('hygiene')" id="tab-hygiene" class="flex-1 py-3 text-center font-bold border-b-4 border-indigo-700 text-indigo-700">위생점검</button>
-            <button onclick="showTab('cleaning')" id="tab-cleaning" class="flex-1 py-3 text-center font-bold text-gray-400 border-b-4 border-transparent">청소/시설</button>
-        </div>
+        <nav class="flex border-b">
+            <button onclick="showTab('hygiene')" id="btn-hygiene" class="flex-1 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 bg-white">위생점검</button>
+            <button onclick="showTab('cleaning')" id="btn-cleaning" class="flex-1 py-3 text-sm font-bold text-slate-400 hover:bg-slate-50">청소점검</button>
+        </nav>
 
-        <div id="settingsModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
-            <div class="bg-white rounded-2xl w-full max-w-xs p-6 shadow-2xl">
-                <h3 class="text-lg font-bold mb-4">기본 정보 설정</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-xs text-gray-500 mb-1 block">기관명</label>
-                        <input type="text" id="schoolNameInput" class="w-full p-3 border rounded-xl" placeholder="예: 순천부영초등학교">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 mb-1 block">작성자(조리사)</label>
-                        <input type="text" id="cookNameInput" class="w-full p-3 border rounded-xl">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-500 mb-1 block">확인자(영양교사)</label>
-                        <input type="text" id="approverNameInput" class="w-full p-3 border rounded-xl">
-                    </div>
-                </div>
-                <div class="mt-6 flex gap-2">
-                    <button onclick="saveSettings()" class="flex-1 py-3 bg-indigo-700 text-white rounded-xl font-bold">저장</button>
-                    <button onclick="toggleSettings()" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-gray-600">취소</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="hygiene" class="tab-content active p-2">
-            <div class="grid-table" id="hygieneGrid"></div>
-            <div class="mt-6 p-3 bg-red-50 rounded-xl">
-                <h3 class="text-xs font-bold mb-2 text-red-800">▣ 위생 미흡사항 조치결과 (최대 5개)</h3>
-                <div class="bg-white rounded border overflow-hidden">
-                    <table class="w-full text-[10px]">
-                        <tbody id="hygieneActionBody"></tbody>
-                    </table>
-                </div>
-                <button onclick="addActionRow('hygieneActions')" class="w-full mt-2 py-2 border-2 border-dashed border-red-200 rounded-lg text-red-400 text-[10px] font-bold">+ 추가</button>
-            </div>
-        </div>
-
-        <div id="cleaning" class="tab-content p-2">
-            <div class="grid-table" id="cleaningGrid"></div>
-            <div class="mt-6 p-3 bg-indigo-50 rounded-xl">
-                <h3 class="text-xs font-bold mb-2 text-indigo-800">▣ 청소/시설 미흡사항 조치결과 (최대 5개)</h3>
-                <div class="bg-white rounded border overflow-hidden">
-                    <table class="w-full text-[10px]">
-                        <tbody id="cleaningActionBody"></tbody>
-                    </table>
-                </div>
-                <button onclick="addActionRow('cleaningActions')" class="w-full mt-2 py-2 border-2 border-dashed border-indigo-200 rounded-lg text-indigo-400 text-[10px] font-bold">+ 추가</button>
-            </div>
-        </div>
-
-        <div class="fixed bottom-0 left-0 right-0 max-w-4xl mx-auto bg-white p-4 border-t flex gap-2 z-30 shadow-2xl">
-            <button onclick="resetWeek()" class="flex-1 py-3 bg-gray-100 rounded-xl text-sm font-bold text-gray-500">초기화</button>
-            <button onclick="window.print()" class="flex-[2] py-3 bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-lg">점검표 인쇄하기</button>
+        <div class="p-4 bg-slate-50 overflow-y-auto" style="max-height: 600px;">
+            <div id="hygiene" class="tab-content active"><div class="grid-table" id="hygieneGrid"></div></div>
+            <div id="cleaning" class="tab-content"><div class="grid-table" id="cleaningGrid"></div></div>
         </div>
     </div>
 
-    <div class="hidden print-only">
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-xs p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4">정보 설정</h3>
+            <div class="space-y-4">
+                <input type="text" id="schoolInput" placeholder="학교명" class="w-full p-2 border rounded-lg text-sm">
+                <input type="text" id="cookInput" placeholder="작성자명" class="w-full p-2 border rounded-lg text-sm">
+                <input type="text" id="approverInput" placeholder="확인자명" class="w-full p-2 border rounded-lg text-sm">
+            </div>
+            <button onclick="saveSettings()" class="w-full mt-6 py-2 bg-blue-600 text-white rounded-lg font-bold">저장</button>
+        </div>
+    </div>
+
+    <!-- Print View -->
+    <div class="hidden print-only" id="printLayout">
+        <!-- Page 1: Hygiene -->
         <div class="print-page">
-            <div class="print-title-container">
-                <div class="print-title">위생 점검표 (주간)</div>
-            </div>
+            <div class="print-title">주간 위생 점검표</div>
             <div class="print-header-info">
-                <div>기관명: <span class="p-school-name"></span></div>
-                <div>점검기간: <span class="p-week-range"></span></div>
+                <div>기관명: <span class="p-school"></span></div>
+                <div>점검기간: <span class="p-range"></span></div>
             </div>
-            <table id="printTableHygiene">
-                <thead><tr style="background:#f5f5f5;"><th class="col-no">No</th><th class="col-task">점검사항</th><th class="col-day">월</th><th class="col-day">화</th><th class="col-day">수</th><th class="col-day">목</th><th class="col-day">금</th><th class="col-note">비고</th></tr></thead>
-                <tbody id="printBodyHygiene"></tbody>
+            <table>
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th class="col-no">No</th><th class="col-task">점검사항</th>
+                        <th class="col-day">월</th><th class="col-day">화</th><th class="col-day">수</th><th class="col-day">목</th><th class="col-day">금</th>
+                        <th class="col-note">비고</th>
+                    </tr>
+                </thead>
+                <tbody id="pBodyHygiene"></tbody>
             </table>
-            <div class="section-title">▣ 위생 미흡사항 및 조치결과</div>
-            <table class="action-table">
-                <thead><tr style="background:#f5f5f5;"><th width="15%">일자</th><th width="35%">미흡사항</th><th width="50%">조치내용 및 결과</th></tr></thead>
-                <tbody id="p-hygiene-actions-body"></tbody>
+            <table class="improvement-box">
+                <tr>
+                    <td rowspan="2" class="improvement-label">개선 및<br>조치사항</td>
+                    <td>1. </td>
+                </tr>
+                <tr>
+                    <td>2. </td>
+                </tr>
             </table>
-            <div class="print-footer-signature">
-                <span class="sig-item">작성자: <span class="p-cook-name"></span> (인)</span>
-                <span class="sig-item">확인자: <span class="p-approver-name"></span> (인)</span>
+            <div class="sign-area">
+                <span>작성자: <span class="p-cook"></span> (인)</span>
+                <span>확인자: <span class="p-approver"></span> (인)</span>
             </div>
         </div>
 
+        <!-- Page 2: Cleaning -->
         <div class="print-page">
-            <div class="print-title-container">
-                <div class="print-title">청소 및 시설 점검표 (주간)</div>
-            </div>
+            <div class="print-title">주간 청소 점검표</div>
             <div class="print-header-info">
-                <div>기관명: <span class="p-school-name"></span></div>
-                <div>점검기간: <span class="p-week-range"></span></div>
+                <div>기관명: <span class="p-school"></span></div>
+                <div>점검기간: <span class="p-range"></span></div>
             </div>
-            <table id="printTableCleaning">
-                <thead><tr style="background:#f5f5f5;"><th class="col-no">No</th><th class="col-task">점검사항</th><th class="col-day">월</th><th class="col-day">화</th><th class="col-day">수</th><th class="col-day">목</th><th class="col-day">금</th><th class="col-note">비고</th></tr></thead>
-                <tbody id="printBodyCleaning"></tbody>
+            <table>
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th class="col-no">No</th><th class="col-task">점검사항</th>
+                        <th class="col-day">월</th><th class="col-day">화</th><th class="col-day">수</th><th class="col-day">목</th><th class="col-day">금</th>
+                        <th class="col-note">비고</th>
+                    </tr>
+                </thead>
+                <tbody id="pBodyCleaning"></tbody>
             </table>
-            <div class="section-title">▣ 청소 · 시설 미흡사항 및 조치결과</div>
-            <table class="action-table">
-                <thead><tr style="background:#f5f5f5;"><th width="15%">일자</th><th width="35%">미흡사항</th><th width="50%">조치내용 및 결과</th></tr></thead>
-                <tbody id="p-cleaning-actions-body"></tbody>
+            <table class="improvement-box">
+                <tr>
+                    <td rowspan="2" class="improvement-label">개선 및<br>조치사항</td>
+                    <td>1. </td>
+                </tr>
+                <tr>
+                    <td>2. </td>
+                </tr>
             </table>
-            <div class="print-footer-signature">
-                <span class="sig-item">작성자: <span class="p-cook-name"></span> (인)</span>
-                <span class="sig-item">확인자: <span class="p-approver-name"></span> (인)</span>
+            <div class="sign-area">
+                <span>작성자: <span class="p-cook"></span> (인)</span>
+                <span>확인자: <span class="p-approver"></span> (인)</span>
             </div>
         </div>
     </div>
 
     <script>
-        const hygieneItems = [
-            { id: 1, task: "설사·발열·구토 및 화농성질환 여부" }, { id: 2, task: "가족 및 동거인의 상기질환 여부" },
-            { id: 3, task: "위생모 위생복 작업화 등의 청결여부" }, { id: 4, task: "손세척 및 소독의 필요 숙지여부" },
-            { id: 5, task: "손톱의 청결 및 장신구 착용여부" }, { id: 6, task: "조리종사원의 심리적 안정상태" },
-            { id: 7, task: "부패·변질 및 무표시제품 사용여부" }, { id: 8, task: "저장조건, 포장용기 등의 적정상태" },
-            { id: 9, task: "교차오염 방지 구분보관 여부" }, { id: 10, task: "보존식 냉동(-18℃이하) 보존 여부" },
-            { id: 11, task: "적정보관 온도 준수여부" }, { id: 12, task: "가열 및 비가열조리식품 구분" },
-            { id: 13, task: "가열식품 신속냉각 및 보관" }, { id: 14, task: "식재료 세척·소독 실시 여부" },
-            { id: 15, task: "조리 및 배식시 마스크 착용" }, { id: 16, task: "오염/청결 구역의 구분 관리" },
-            { id: 17, task: "방충·방서 및 이물혼입 방지" }, { id: 18, task: "원료별 조리기구의 구분 사용" },
-            { id: 19, task: "칼·도마·행주 세척 및 소독" }, { id: 20, task: "수세 및 소독시설 정상 작동" },
-            { id: 21, task: "바닥 물고임 방지 및 배수구 청결" }, { id: 22, task: "음식물쓰레기 처리 및 용기 청결" },
-            { id: 23, task: "폐기물 보관 장소 청결 관리" }, { id: 24, task: "가스, 전기, 수도 관리 상태" },
-            { id: 25, task: "소화기 점검(외관, 압력 지침)" }, { id: 26, task: "유통기한 경과제품 사용여부" }
+        const hTasks = [
+            "건강상태(설사, 발열, 구토) 여부", "손가락의 상처 및 화농성 질환 여부", "위생복, 위생모, 위생화 착용 상태",
+            "손 세척 및 소독(배식전 포함) 여부", "손톱의 청결상태 및 매니큐어 여부", "조리사 심리적 안도감 및 친절 상태",
+            "부패/변질 식재료 사용 금지 준수", "검수 시 온도의 적절성 확인", "식재료의 위생적 구분 보관 상태",
+            "보존식 채취 및 보관(-18℃ 이하)", "냉장/냉동고 적정 온도 유지 여부", "조리 전/후 식품의 교차오염 방지",
+            "가열 조리 시 중심온도 측정(85℃)", "채소/과일류의 세척 및 소독 여부", "배식 시 위생장갑 및 마스크 착용",
+            "비오염구역과 오염구역의 구분", "방충 및 방서 시설의 관리 상태", "칼, 도마 등 용도별 구분 사용",
+            "조리기구 세척 후 건조 및 소독", "수돗물 외 음용수 정기 수질검사", "바닥의 청결 및 배수구 찌꺼기 제거",
+            "쓰레기통 덮개 비치 및 위생 관리", "청소도구의 위생적 보관 상태", "가스/전기 누설 및 차단기 점검",
+            "소화기 압력계 및 인근 통로 확보", "유통기한 경과 제품 보관 여부"
         ];
 
-        const cleaningItems = [
-            { id: 1, task: "취사기 및 취반기 세척 상태" }, { id: 2, task: "국솥 및 조림솥 청결 상태" },
-            { id: 3, task: "튀김솥 및 볶음솥 세척 상태" }, { id: 4, task: "식판 및 찬통 세척·살균 상태" },
-            { id: 5, task: "세정대 및 조리대 하부 청결" }, { id: 6, task: "도마, 칼, 기구 소독고 관리" },
-            { id: 7, task: "자외선살균기 내부 청결" }, { id: 8, task: "배수구 및 트랜치 머리카락 제거" },
-            { id: 9, task: "식당 바닥 물기 및 미끄럼 방지" }, { id: 10, task: "배기후드 및 닥트 기름때 제거" },
-            { id: 11, task: "유리창 및 방충망 청결 상태" }, { id: 12, task: "조리종사자 휴게실 청결 관리" },
-            { id: 13, task: "냉장·냉동고 내부 청결 및 성에 제거" }, { id: 14, task: "천장 및 벽면의 거미줄 제거" },
-            { id: 15, task: "소모품(세제, 소독제) 보관함 정리" }, { id: 16, task: "식기건조대 및 선반 먼지 제거" },
-            { id: 17, task: "그리스 트랩 관리 및 청결" }, { id: 18, task: "출입문 손잡이 및 스위치 소독" },
-            { id: 19, task: "청소도구함 정리 및 도구 건조" }, { id: 20, task: "전구 및 조명기구 덮개 청결" },
-            { id: 21, task: "운반차 및 배식차 바퀴 청결" }, { id: 22, task: "냉난방기 필터 및 외관 청결" },
-            { id: 23, task: "소화기 외관(변형, 부식) 점검" }, { id: 24, task: "소화기 압력계 정상(녹색) 확인" }
+        const cTasks = [
+            "취사기 및 밥솥 주변의 세척 상태", "국솥 및 조림솥 하단부 찌꺼기 제거", "튀김기 및 볶음솥 세척 후 건조",
+            "식판 및 찬통의 살균/세척 상태", "세정대 내외부의 기름때 제거", "조리대 및 작업대 하부 선반 청결",
+            "칼/도마 소독고 내부의 청결 유지", "자외선 살균기 내부 램프 작동 확인", "트랜치 내부 및 덮개의 이물질 제거",
+            "후드 필터 및 내부 기름방울 제거", "유리창 먼지 및 방충망 훼손 여부", "종사자 휴게실 및 화장실 청결",
+            "냉장고 선반 및 바닥 물청소", "환풍기 및 닥트 흡입구 먼지 제거", "청소용 세제 및 소독제 라벨링 보관",
+            "식기 건조 선반의 하부 먼지 제거", "배수구 트랩의 거름망 청결 상태", "문 손잡이 및 전원 스위치 소독",
+            "걸레 건조대 및 청소도구함 정리", "조명기구 덮개 및 천장 거미줄 제거", "배식 카트 바퀴의 머리카락 제거",
+            "냉난방기 필터 청소 및 외관 청결", "소화기 외관의 부식 및 변형 확인", "소화시설 인근의 물품 적재 여부"
         ];
 
-        let scores = { hygiene: {}, cleaning: {}, hygieneActions: [], cleaningActions: [] };
-        let currentWeekStart = "";
-        
-        // 로컬스토리지 키 버전 관리 (충돌 방지)
-        let schoolName = localStorage.getItem('school_name_v12') || "순천부영초등학교";
-        let cookName = localStorage.getItem('cook_name_v12') || "";
-        let approverName = localStorage.getItem('approver_name_v12') || "양선희";
+        let state = {
+            school: localStorage.getItem('s_name') || "순천부영초등학교",
+            cook: localStorage.getItem('c_name') || "",
+            approver: localStorage.getItem('a_name') || "양선희",
+            data: {} 
+        };
 
-        function initApp() {
+        function init() {
             const today = new Date();
-            const diff = today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1);
-            const mon = new Date(today.setDate(diff)).toISOString().split('T')[0];
-            document.getElementById('weekPicker').value = mon;
-            updateSettingsUI();
+            const mon = new Date(today.setDate(today.getDate() + (today.getDay() === 0 ? -6 : 1 - today.getDay())));
+            document.getElementById('weekPicker').value = mon.toISOString().split('T')[0];
+            updateInfo();
             loadWeek();
         }
 
-        function updateSettingsUI() {
-            document.getElementById('headerSchoolName').innerText = schoolName;
-            document.querySelectorAll('.p-school-name').forEach(el => el.innerText = schoolName);
-            document.querySelectorAll('.p-cook-name').forEach(el => el.innerText = cookName);
-            document.querySelectorAll('.p-approver-name').forEach(el => el.innerText = approverName);
-            document.getElementById('schoolNameInput').value = schoolName;
-            document.getElementById('cookNameInput').value = cookName;
-            document.getElementById('approverNameInput').value = approverName;
+        function updateInfo() {
+            document.getElementById('displaySchool').innerText = state.school;
+            document.getElementById('schoolInput').value = state.school;
+            document.getElementById('cookInput').value = state.cook;
+            document.getElementById('approverInput').value = state.approver;
+            document.querySelectorAll('.p-school').forEach(e => e.innerText = state.school);
+            document.querySelectorAll('.p-cook').forEach(e => e.innerText = state.cook);
+            document.querySelectorAll('.p-approver').forEach(e => e.innerText = state.approver);
         }
 
         function loadWeek() {
-            currentWeekStart = document.getElementById('weekPicker').value;
-            const saved = localStorage.getItem(`week_data_v12_${currentWeekStart}`);
+            const weekKey = document.getElementById('weekPicker').value;
+            const saved = localStorage.getItem(`week_${weekKey}`);
+            
             if (saved) {
-                scores = JSON.parse(saved);
-            } else { resetScores(); }
-            updateDateUI();
-            renderGrids();
-            renderActionItems();
+                state.data = JSON.parse(saved);
+            } else {
+                state.data = {
+                    hygiene: { checks: hTasks.map(() => Array(5).fill("")), notes: hTasks.map(() => "") },
+                    cleaning: { checks: cTasks.map(() => Array(5).fill("")), notes: cTasks.map(() => "") }
+                };
+            }
+
+            const mon = new Date(weekKey);
+            const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+            const range = `${mon.getFullYear()}.${mon.getMonth()+1}.${mon.getDate()} ~ ${fri.getFullYear()}.${fri.getMonth()+1}.${fri.getDate()}`;
+            document.getElementById('weekRangeDisplay').innerText = range;
+            document.querySelectorAll('.p-range').forEach(e => e.innerText = range);
+
+            render();
         }
 
-        function resetScores() {
-            scores = { hygiene: {}, cleaning: {}, hygieneActions: [], cleaningActions: [] };
-            hygieneItems.forEach(i => scores.hygiene[i.id] = ["양호","양호","양호","양호","양호"]);
-            cleaningItems.forEach(i => scores.cleaning[i.id] = ["양호","양호","양호","양호","양호"]);
-            saveData();
-        }
-
-        function updateDateUI() {
-            const m = new Date(currentWeekStart);
-            const f = new Date(m); f.setDate(m.getDate() + 4);
-            const startStr = `${m.getMonth()+1}/${m.getDate()}`;
-            const endStr = `${f.getMonth()+1}/${f.getDate()}`;
-            document.getElementById('weekRangeText').innerText = `(${startStr}~${endStr})`;
-            document.querySelectorAll('.p-week-range').forEach(el => el.innerText = `${m.getFullYear()}년 ${startStr} ~ ${endStr}`);
-        }
-
-        function renderGrids() {
-            const render = (id, items, type) => {
-                const g = document.getElementById(id);
-                let h = `<div class="grid-cell header-cell">No</div><div class="grid-cell header-cell">점검사항</div><div class="grid-cell header-cell">월</div><div class="grid-cell header-cell">화</div><div class="grid-cell header-cell">수</div><div class="grid-cell header-cell">목</div><div class="grid-cell header-cell">금</div>`;
-                items.forEach(i => {
-                    h += `<div class="grid-cell bg-gray-50 text-[9px] font-bold text-gray-400">${i.id}</div><div class="grid-cell justify-start px-2 text-[10px] leading-tight text-left">${i.task}</div>`;
+        function render() {
+            const build = (tasks, type) => {
+                let html = `<div class="grid-cell header-cell">No</div><div class="grid-cell header-cell">점검사항</div><div class="grid-cell header-cell">월</div><div class="grid-cell header-cell">화</div><div class="grid-cell header-cell">수</div><div class="grid-cell header-cell">목</div><div class="grid-cell header-cell">금</div><div class="grid-cell header-cell">비고</div>`;
+                tasks.forEach((task, i) => {
+                    html += `<div class="grid-cell font-bold text-slate-400">${i+1}</div><div class="grid-cell justify-start px-2 font-medium">${task}</div>`;
                     for(let d=0; d<5; d++) {
-                        const v = scores[type][i.id][d];
-                        const cls = v === '양호' ? 'val-good' : (v === '미흡' ? 'val-bad' : '');
-                        h += `<div class="grid-cell p-0"><div class="check-cycle ${cls} font-hand" onclick="cycleCheck('${type}', ${i.id}, ${d})">${v}</div></div>`;
+                        const val = state.data[type].checks[i][d];
+                        html += `<div class="grid-cell p-0"><div class="clickable-cell font-hand" onclick="cycle('${type}', ${i}, ${d})">${val}</div></div>`;
                     }
+                    html += `<div class="grid-cell p-1"><input type="text" class="w-full h-full bg-transparent text-xs px-1 outline-none" value="${state.data[type].notes[i]}" onchange="updNote('${type}', ${i}, this.value)"></div>`;
                 });
-                g.innerHTML = h;
+                return html;
             };
-            render('hygieneGrid', hygieneItems, 'hygiene');
-            render('cleaningGrid', cleaningItems, 'cleaning');
-            renderPrintTables();
-        }
+            document.getElementById('hygieneGrid').innerHTML = build(hTasks, 'hygiene');
+            document.getElementById('cleaningGrid').innerHTML = build(cTasks, 'cleaning');
 
-        function cycleCheck(t, id, d) {
-            const cur = scores[t][id][d];
-            scores[t][id][d] = cur === "양호" ? "미흡" : (cur === "미흡" ? "" : "양호");
-            saveData(); renderGrids();
-        }
-
-        function renderActionItems() {
-            const renderList = (id, type) => {
-                const b = document.getElementById(id);
-                let h = '';
-                scores[type].forEach((a, i) => {
-                    h += `<tr class="border-b"><td><input type="text" value="${a.date}" placeholder="날짜" onchange="updAction('${type}',${i},'date',this.value)" class="w-full border-none p-1 text-center"></td><td><input type="text" value="${a.issue}" placeholder="미흡내용" onchange="updAction('${type}',${i},'issue',this.value)" class="w-full border-none p-1"></td><td class="flex items-center"><input type="text" value="${a.result}" placeholder="조치결과" onchange="updAction('${type}',${i},'result',this.value)" class="w-full border-none p-1"><button onclick="remAction('${type}',${i})" class="px-2 text-red-300">✕</button></td></tr>`;
+            const buildPrint = (tasks, type) => {
+                let html = "";
+                tasks.forEach((task, i) => {
+                    html += `<tr><td>${i+1}</td><td class="col-task">${task}</td>`;
+                    for(let d=0; d<5; d++) html += `<td class="font-hand-print">${state.data[type].checks[i][d]}</td>`;
+                    html += `<td>${state.data[type].notes[i]}</td></tr>`;
                 });
-                b.innerHTML = h || '<tr><td colspan="3" class="p-3 text-center text-gray-300 text-[10px]">미흡사항 없음</td></tr>';
+                return html;
             };
-            renderList('hygieneActionBody', 'hygieneActions');
-            renderList('cleaningActionBody', 'cleaningActions');
+            document.getElementById('pBodyHygiene').innerHTML = buildPrint(hTasks, 'hygiene');
+            document.getElementById('pBodyCleaning').innerHTML = buildPrint(cTasks, 'cleaning');
         }
 
-        function addActionRow(t) { 
-            if(scores[t].length >= 5) return; 
-            scores[t].push({date:"", issue:"", result:""}); saveData(); renderActionItems(); 
+        function cycle(type, row, col) {
+            const cur = state.data[type].checks[row][col];
+            state.data[type].checks[row][col] = cur === "" ? "양호" : (cur === "양호" ? "미흡" : "");
+            save(); render();
         }
-        function updAction(t, i, f, v) { scores[t][i][f] = v; saveData(); renderPrintTables(); }
-        function remAction(t, i) { scores[t].splice(i,1); saveData(); renderActionItems(); }
-        function saveData() { localStorage.setItem(`week_data_v12_${currentWeekStart}`, JSON.stringify(scores)); }
-        
-        function showTab(t) { 
+
+        function checkAllDay(col) {
+            const type = document.getElementById('hygiene').classList.contains('active') ? 'hygiene' : 'cleaning';
+            const tasks = type === 'hygiene' ? hTasks : cTasks;
+            tasks.forEach((_, i) => state.data[type].checks[i][col] = "양호");
+            save(); render();
+        }
+
+        function updNote(type, row, val) {
+            state.data[type].notes[row] = val;
+            save(); render();
+        }
+
+        function showTab(t) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.getElementById(t).classList.add('active');
-            document.querySelectorAll('[id^="tab-"]').forEach(b => { b.classList.remove('border-indigo-700','text-indigo-700'); b.classList.add('text-gray-400','border-transparent'); });
-            document.getElementById(`tab-${t}`).classList.add('border-indigo-700','text-indigo-700');
-        }
-
-        function renderPrintTables() {
-            const fillTable = (items, sc, body) => {
-                body.innerHTML = '';
-                items.forEach(i => {
-                    const d = sc[i.id] || ["","","","",""];
-                    body.innerHTML += `<tr><td>${i.id}</td><td style="text-align:left; padding-left:10px;">${i.task}</td><td class="font-hand ${d[0]==='미흡'?'val-bad':''}">${d[0]}</td><td class="font-hand ${d[1]==='미흡'?'val-bad':''}">${d[1]}</td><td class="font-hand ${d[2]==='미흡'?'val-bad':''}">${d[2]}</td><td class="font-hand ${d[3]==='미흡'?'val-bad':''}">${d[3]}</td><td class="font-hand ${d[4]==='미흡'?'val-bad':''}">${d[4]}</td><td></td></tr>`;
-                });
-            };
-            fillTable(hygieneItems, scores.hygiene, document.getElementById('printBodyHygiene'));
-            fillTable(cleaningItems, scores.cleaning, document.getElementById('printBodyCleaning'));
-            
-            const fillActions = (data, body) => {
-                body.innerHTML = '';
-                for(let i=0; i<5; i++) { 
-                    const a = data[i] || {date:"", issue:"", result:""};
-                    body.innerHTML += `<tr><td>${a.date}</td><td style="text-align:left; padding-left:8px;">${a.issue}</td><td style="text-align:left; padding-left:8px;">${a.result}</td></tr>`;
-                }
-            };
-            fillActions(scores.hygieneActions, document.getElementById('p-hygiene-actions-body'));
-            fillActions(scores.cleaningActions, document.getElementById('p-cleaning-actions-body'));
+            document.getElementById('btn-hygiene').className = t === 'hygiene' ? "flex-1 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 bg-white" : "flex-1 py-3 text-sm font-bold text-slate-400 hover:bg-slate-50";
+            document.getElementById('btn-cleaning').className = t === 'cleaning' ? "flex-1 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 bg-white" : "flex-1 py-3 text-sm font-bold text-slate-400 hover:bg-slate-50";
         }
 
         function toggleSettings() { document.getElementById('settingsModal').classList.toggle('hidden'); }
+
         function saveSettings() {
-            schoolName = document.getElementById('schoolNameInput').value.trim() || "순천부영초등학교";
-            cookName = document.getElementById('cookNameInput').value.trim();
-            approverName = document.getElementById('approverNameInput').value.trim() || "양선희";
-            localStorage.setItem('school_name_v12', schoolName);
-            localStorage.setItem('cook_name_v12', cookName);
-            localStorage.setItem('approver_name_v12', approverName);
-            updateSettingsUI(); toggleSettings();
+            state.school = document.getElementById('schoolInput').value;
+            state.cook = document.getElementById('cookInput').value;
+            state.approver = document.getElementById('approverInput').value;
+            localStorage.setItem('s_name', state.school);
+            localStorage.setItem('c_name', state.cook);
+            localStorage.setItem('a_name', state.approver);
+            updateInfo(); toggleSettings(); render();
         }
-        function resetWeek() { if(confirm('데이터를 초기화할까요?')) { localStorage.removeItem(`week_data_v12_${currentWeekStart}`); loadWeek(); } }
-        
-        window.onload = initApp;
+
+        function save() {
+            localStorage.setItem(`week_${document.getElementById('weekPicker').value}`, JSON.stringify(state.data));
+        }
+
+        init();
     </script>
 </body>
 </html>
