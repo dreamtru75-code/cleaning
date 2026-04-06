@@ -37,7 +37,7 @@
         @media print {
             @page { 
                 size: A4 portrait; 
-                /* 여백을 0으로 설정하여 브라우저의 자동 헤더/푸터(URL, 시간 등) 출력을 강제로 제거 */
+                /* 여백을 0으로 설정하여 브라우저의 자동 헤더/푸터(URL, 시간 등) 출력을 제거 */
                 margin: 0; 
             }
             body { 
@@ -48,7 +48,7 @@
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             
-            /* 실제 콘텐츠 영역에 여백을 주어 잘리지 않게 함 */
+            /* 실제 콘텐츠 영역 */
             .print-page { 
                 page-break-after: always; 
                 width: 210mm;
@@ -149,7 +149,6 @@
 
     <!-- Print View -->
     <div class="hidden print-only" id="printLayout">
-        <!-- Page 1: Hygiene -->
         <div class="print-page">
             <div class="print-title">주간 위생 점검표</div>
             <div class="print-header-info">
@@ -181,7 +180,6 @@
             </div>
         </div>
 
-        <!-- Page 2: Cleaning -->
         <div class="print-page">
             <div class="print-title">주간 청소 점검표</div>
             <div class="print-header-info">
@@ -323,7 +321,15 @@
         function checkAllDay(col) {
             const type = document.getElementById('hygiene').classList.contains('active') ? 'hygiene' : 'cleaning';
             const tasks = type === 'hygiene' ? hTasks : cTasks;
-            tasks.forEach((_, i) => state.data[type].checks[i][col] = "양호");
+            
+            // 모든 항목이 이미 '양호'인지 확인
+            const isAllChecked = tasks.every((_, i) => state.data[type].checks[i][col] === "양호");
+            
+            // 모두 '양호'라면 초기화(빈칸), 아니면 모두 '양호'로 채움
+            tasks.forEach((_, i) => {
+                state.data[type].checks[i][col] = isAllChecked ? "" : "양호";
+            });
+            
             save(); render();
         }
 
